@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>学习与生活计划中心 · Jikun</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#111a2e; --card:#16223c; --card2:#1b2a49;
+    --border:#25355c; --text:#e6edf7; --muted:#8fa3c4; --accent:#5b8cff; --accent2:#22d3ee;
+    --ok:#22c55e; --miss:#ef4444;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; min-height:100vh;}
+  header{background:linear-gradient(135deg,#1e2c52 0%,#0f1a33 60%); border-bottom:1px solid var(--border); padding:22px 26px 16px;}
+  header h1{font-size:21px; letter-spacing:.5px;}
+  header .sub{color:var(--muted); font-size:12.5px; margin-top:6px; line-height:1.7;}
+  header .sub b{color:var(--accent2); font-weight:600;}
+  .tabs{display:flex; flex-wrap:wrap; gap:8px; padding:14px 26px; background:var(--panel); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50;}
+  .tab{padding:8px 16px; border-radius:999px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; font-size:13.5px; transition:.15s;}
+  .tab:hover{border-color:var(--accent); color:var(--text);}
+  .tab.active{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600;}
+  main{max-width:1180px; margin:0 auto; padding:24px 22px 80px;}
+  section.pane{display:none;}
+  section.pane.show{display:block;}
+  h2.sec{font-size:17px; margin:6px 0 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  h2.sec .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);}
+  .hint{background:#12233b; border:1px solid #1e3a5f; border-left:4px solid var(--accent2); color:#a9c3ea; padding:12px 16px; border-radius:10px; font-size:13px; line-height:1.8; margin-bottom:18px;}
+  .days{display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:18px;}
+  .day{background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden;}
+  .day.today{border-color:var(--accent2); box-shadow:0 0 0 1px var(--accent2);}
+  .day-h{padding:14px 16px 10px; border-bottom:1px solid var(--border); background:var(--card2);}
+  .day-h .t{font-size:16px; font-weight:700;}
+  .day-h .sun{font-size:12px; color:var(--accent2); margin-top:3px;}
+  .day-h .note{font-size:11.5px; color:var(--muted); margin-top:5px; line-height:1.6;}
+  .pbar{height:6px; background:#0d1730; border-radius:99px; margin-top:10px; overflow:hidden;}
+  .pbar>div{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0%; transition:.3s;}
+  .pnum{font-size:11px; color:var(--muted); margin-top:4px; text-align:right;}
+  .blocks{padding:8px 10px 12px;}
+  .blk{display:flex; align-items:stretch; gap:8px; padding:7px 8px; border-radius:10px; margin-top:5px; border:1px solid transparent;}
+  .blk .tm{font-size:10.5px; color:var(--muted); min-width:86px; padding-top:2px; font-family:ui-monospace,Menlo,monospace;}
+  .blk .tx{flex:1; font-size:13px; line-height:1.5;}
+  .blk .tx small{display:inline-block; font-size:10px; padding:1px 7px; border-radius:99px; margin-right:6px; vertical-align:1px;}
+  .ops{display:flex; gap:5px; align-items:center;}
+  .op{width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;transition:.12s;}
+  .op:hover{transform:scale(1.12);}
+  .op.on-ok{background:var(--ok); border-color:var(--ok); color:#04150a;}
+  .op.on-miss{background:var(--miss); border-color:var(--miss); color:#fff;}
+  .blk.done{opacity:.62;}
+  .blk.done .tx{text-decoration:line-through; text-decoration-color:#5b7396;}
+  .blk.missed .tx{opacity:.7;}
+  .blk.editing{flex-direction:column; gap:6px;}
+  .eform{display:grid; grid-template-columns:70px 70px 90px 1fr; gap:6px; align-items:center;}
+  .eform input,.eform select{background:#0d1730;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 7px;font-size:12px;width:100%;}
+  .eform input:last-child,.eform .full{grid-column:span 4;}
+  .day-add{margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;}
+  table.tbl{width:100%; border-collapse:collapse; font-size:13px; background:var(--card); border-radius:12px; overflow:hidden;}
+  table.tbl th{background:var(--card2); color:var(--muted); font-size:12px; padding:10px 12px; text-align:left; border-bottom:1px solid var(--border);}
+  table.tbl td{padding:10px 12px; border-bottom:1px solid #1d2c4d; vertical-align:top; line-height:1.6;}
+  table.tbl tr:last-child td{border-bottom:none;}
+  input.f, select.f, textarea.f{background:#0d1730; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 10px; font-size:13px; width:100%; font-family:inherit;}
+  textarea.f{min-height:110px; resize:vertical; line-height:1.7;}
+  .btn{background:var(--accent); color:#fff; border:none; border-radius:9px; padding:9px 18px; font-size:13.5px; cursor:pointer; font-weight:600;}
+  .btn:hover{filter:brightness(1.15);}
+  .btn.ghost{background:transparent; border:1px solid var(--border); color:var(--text); font-weight:500;}
+  .btn.warn{background:#7c5e10; border-color:#a17f19;}
+  .btn.danger{background:#7f1d1d;}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:12px 0;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:16px;}
+  .chip{display:inline-block; padding:2px 10px; border-radius:99px; font-size:11.5px; margin:0 6px 6px 0;}
+  a.link{color:var(--accent2); text-decoration:none; font-size:13px;}
+  a.link:hover{text-decoration:underline;}
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-bottom:18px;}
+  .stat{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;}
+  .stat .v{font-size:24px; font-weight:800; background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .stat .k{font-size:12px; color:var(--muted); margin-top:3px;}
+  .rice{background:#0e2b1c; border:1px solid #1c5c38; border-radius:8px; padding:7px 10px; font-size:12px; color:#6ee7a0; margin-top:8px; line-height:1.6;}
+  .miss-list li{color:#fca5a5; font-size:12.5px; margin:4px 0 0 18px; line-height:1.6;}
+  .sug-list li{font-size:13px; margin:7px 0 0 20px; line-height:1.7; color:#c7d5ef;}
+  .sug-list li b{color:var(--accent2);}
+  .footer{max-width:1180px; margin:0 auto; padding:0 22px 40px; color:#5b6f95; font-size:11.5px; line-height:1.9;}
+  .todo-row{display:flex; gap:8px; margin-bottom:8px; align-items:center;}
+  .todo-row input.d{width:110px;} .todo-row input.t{flex:1;} .todo-row input.n{width:30%;}
+  .ck{width:18px;height:18px;accent-color:var(--ok);cursor:pointer;}
+  .toast{position:fixed; bottom:26px; left:50%; transform:translateX(-50%); background:#0d2b4d; border:1px solid #2b6cb0; color:#dbeefe; padding:12px 22px; border-radius:12px; font-size:13.5px; z-index:200; display:none; box-shadow:0 8px 30px rgba(0,0,0,.5);}
+  .toast.show{display:block; animation:fadein .2s;}
+  .editbar{margin-left:auto; display:flex; gap:8px; align-items:center; font-size:12.5px; color:var(--muted);}
+  @media(max-width:720px){
+    .days{grid-template-columns:1fr;} .todo-row{flex-wrap:wrap;} .eform{grid-template-columns:1fr 1fr;} .eform .full{grid-column:span 2;}
+    .tabs{overflow-x:auto; flex-wrap:nowrap; padding:10px 12px; -webkit-overflow-scrolling:touch;}
+    .tab{white-space:nowrap; flex:0 0 auto; padding:10px 15px; font-size:14px;}
+    .blk{flex-wrap:wrap; padding:10px 10px;}
+    .blk .tm{min-width:100%; display:flex; gap:8px; font-size:11.5px; margin-bottom:2px;}
+    .op{width:36px; height:36px; font-size:17px;}
+    .blk .ops{width:100%; justify-content:flex-end; gap:8px; margin-top:4px;}
+    main{padding:16px 12px 70px;} header{padding:16px 14px 12px;}
+    table.tbl{font-size:12px;} table.tbl th, table.tbl td{padding:8px 8px;}
+    .toast{width:90%; left:50%;}
+    .day-add{flex-wrap:wrap;}
+    .btn{padding:11px 18px;} input.f,select.f,textarea.f{font-size:15px; padding:10px 12px;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>📅 学习与生活计划中心</h1>
+  <div class="sub" id="metaLine">加载中…</div>
+</header>
+<nav class="tabs" id="tabs"></nav>
+<main>
+  <section class="pane" id="pane-weekend">
+    <h2 class="sec"><span class="dot"></span>本周末计划（10月3日–4日）· 长跑赶在日落前
+      <span class="editbar"><button class="btn ghost" style="padding:5px 12px;font-size:12px" onclick="toggleEdit('weekend')">✏️ 编辑计划</button></span></h2>
+    <div class="hint">🏃 周六日落 <b>18:54</b>、周日日落 <b>18:52</b> —— 长跑分别安排 16:30–18:00 / 16:15–17:45。每完成一项点 <b>✓</b>，没做到点 <b>✗</b>。点右上「✏️ 编辑计划」可以<b>修改/删除/添加任何条目</b>（保存在本机浏览器）。周日晚一键生成反馈发给 WorkBuddy 更新下周计划。</div>
+    <div class="days" id="daysWeekend"></div>
+  </section>
+
+  <section class="pane" id="pane-week">
+    <h2 class="sec"><span class="dot"></span>下周计划（10月5日–11日）· 7:00起 / 22:00睡
+      <span class="editbar"><button class="btn ghost" style="padding:5px 12px;font-size:12px" onclick="toggleEdit('week')">✏️ 编辑计划</button></span></h2>
+    <div class="hint">📚 每日固定：<b>早晚各1h视频</b>（与吃饭重叠）· <b>读书1.5h</b> · <b>复习预习</b> · <b>英语口语</b> · <b>法语</b>（B站课+通勤Duolingo 30min）· 通勤单程30min已计入。<b>周二早 7:00-8:30 健身</b>（起床提前到 6:50，早视频后移到 9:00）。<b>周三晚 3h 晚课</b>，读书提前到早晨。⚠️ ESC301 周三 17-18 点时间请在 ACORN 再确认。</div>
+    <div class="days" id="daysWeek"></div>
+  </section>
+
+  <section class="pane" id="pane-tasks">
+    <h2 class="sec"><span class="dot"></span>我的每周任务（自己写）</h2>
+    <div class="hint">✍️ 这个栏目完全由你自己填写：对应日期写下本周要完成的大事（作业截止、约人、报名、缴费…），完成后勾选。点 <b>⏰</b> 可以把这条任务加进提醒（到点弹窗），也可一起导出到手机日历。这些会自动汇入周报告。</div>
+    <div id="todoEditor"></div>
+    <button class="btn ghost" onclick="addTodo()">＋ 添加一条任务</button>
+  </section>
+
+  <section class="pane" id="pane-diet">
+    <h2 class="sec"><span class="dot"></span>饮食计划 · 减脂（70kg）</h2>
+    <div class="card">
+      <b style="color:var(--accent2)">早餐固定模板（每天 5–10 分钟）</b><br>
+      燕麦 50g + 牛奶 250ml + 水煮蛋 2 个（蛋可前晚煮好，早上微波）≈ 450 kcal
+      <div id="dietTips" style="margin-top:12px;"></div>
+    </div>
+    <div id="dietTable"></div>
+    <div class="hint">🍚 <b>米饭预约规则</b>：要吃米饭的日子，<b>前一天晚上 22:00（收尾时段）设置电饭煲预约</b>，定时到当天 18:00–18:30 出饭；早上做好的菜冷藏，晚上微波 + 现成米饭。周三便当日的饭早上盛进保温盒。</div>
+  </section>
+
+  <section class="pane" id="pane-grocery">
+    <h2 class="sec"><span class="dot"></span>🛒 每日做饭材料清单</h2>
+    <div class="hint">每天 breakfast 材料固定（燕麦50g/牛奶250ml/鸡蛋2个），下表只列午餐+晚餐材料。早上 10:00-10:30 一次备好全天餐食；有课日午餐装便当。</div>
+    <div id="groceryTable"></div>
+    <div class="card">
+      <b style="color:var(--accent2)">🛒 一周采购清单（周日上午一次买齐 / 线上下单）</b>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">勾选已买的，进度自动保存</div>
+      <div id="shopBox" style="margin-top:12px;"></div>
+    </div>
+  </section>
+
+  <section class="pane" id="pane-res">
+    <h2 class="sec"><span class="dot"></span>学习资源</h2>
+    <div id="resBox"></div>
+    <div class="card" style="margin-top:16px">
+      <b style="color:var(--accent2)">LinkedIn Profile & Resume 完整建议（周末两轮完成）</b>
+      <ol id="adviceBox" style="margin:12px 0 0 22px; line-height:1.9; font-size:13.5px; color:#c7d5ef;"></ol>
+    </div>
+  </section>
+
+  <section class="pane" id="pane-report">
+    <h2 class="sec"><span class="dot"></span>周报告 · 数据分析 & 每周反馈</h2>
+    <div class="hint">📊 报告由你勾选的 ✓/✗ 自动计算，下方「智能分析与优化建议」每周自动更新。周日晚 20:30 有提醒；点「生成反馈文本」→「复制」→ 粘贴到 WorkBuddy 对话框，我会按你的新要求生成下周计划并更新这个网站。</div>
+    <div class="stat-grid" id="stats"></div>
+    <div class="card"><b>各日完成率</b><div id="dayRates" style="margin-top:10px;"></div></div>
+    <div class="card"><b>分类投入（已完成小时数）</b><div id="catHours" style="margin-top:10px;"></div></div>
+    <div class="card"><b>🧠 智能分析与优化建议（根据本周数据自动生成）</b><ul class="sug-list" id="analysisBox" style="margin-top:10px;"></ul></div>
+    <div class="card"><b>❌ 未完成清单（周内改进）</b><ul class="miss-list" id="missList"></ul></div>
+    <div class="card">
+      <b>给 WorkBuddy 的每周反馈（可编辑后复制）</b>
+      <textarea class="f" id="fbText" style="margin-top:10px;" placeholder="点下面按钮自动生成，也可以自己补充……"></textarea>
+      <div class="row">
+        <button class="btn" onclick="genFeedback()">⚙️ 生成反馈文本</button>
+        <button class="btn ghost" onclick="copyFeedback()">📋 复制</button>
+        <span id="copyTip" style="color:var(--ok);font-size:12.5px;"></span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.8">
+        反馈里请包含：<b>① 对下周的要求/调整 ② 哪些安排太满/太空 ③ 新增的截止日期或事件</b>。粘贴到 WorkBuddy 后我会重新读取课表生成新一周计划。
+      </div>
+    </div>
+  </section>
+
+  <section class="pane" id="pane-remind">
+    <h2 class="sec"><span class="dot"></span>⏰ 提醒</h2>
+    <div class="hint">📱 <b>手机最强方案</b>：点「📲 导出到手机日历」生成 .ics 文件，用手机打开 → 添加到日历 → <b>系统级提醒</b>（不依赖网页开着）。网页内提醒：开启浏览器通知并保持页面开着（电脑端适用）；周日 20:30 每周反馈另有 WorkBuddy 系统级提醒，双保险。</div>
+    <div class="card">
+      <div class="row" style="margin-top:0">
+        <button class="btn" onclick="downloadICS()">📲 导出到手机日历 (.ics)</button>
+        <button class="btn ghost" onclick="enableNotif()">🔔 开启浏览器通知</button>
+        <span id="notifState" style="font-size:12.5px;color:var(--muted)"></span>
+      </div>
+      <div id="remBox"></div>
+      <div id="customRemBox" style="margin-top:14px;"></div>
+    </div>
+  </section>
+
+  <section class="pane" id="pane-data">
+    <h2 class="sec"><span class="dot"></span>数据管理</h2>
+    <div class="card">
+      <p style="font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:14px">
+        所有勾选、<b>计划编辑</b>、采购清单勾选、提醒开关都保存在<b style="color:var(--text)">当前设备的浏览器</b>（localStorage）——<b style="color:var(--text)">电脑和手机互不相通</b>。换设备前：旧设备「导出备份」→ 新设备「导入备份」。<br>
+        手机访问：<b style="color:var(--accent2)">https://shelby051112.github.io/plan-center/</b>（建议添加到主屏幕）。<br>
+        反馈闭环：复制周反馈 → 粘贴到 WorkBuddy → 生成下一周新版计划网站（每周日晚 20:30 自动提醒）。
+      </p>
+      <div class="row">
+        <button class="btn" onclick="exportData()">⬇️ 导出备份 (JSON)</button>
+        <label class="btn ghost" style="cursor:pointer">⬆️ 导入备份<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+        <button class="btn danger" onclick="resetData()">🗑 清空本周记录</button>
+        <button class="btn warn" onclick="resetEdits()">↺ 恢复计划为默认版</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="footer" id="foot"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const PLAN = {"meta": {"period": "2026-10-03 ~ 2026-10-11", "student": "Jikun Chang · UofT 2026 Fall", "commute": "通勤单程 30min", "timetable": {"10-05": "MIE375 11-13 · ESC384 13-15", "10-06": "STA347 11-13 · MIE375 TUT 13-14", "10-07": "STA302 15-16 · ESC301 17-18(待确认) · CHE374 18-21", "10-08": "STA347 11-12 · MIE375 12-13 · CHE374 TUT 18-19", "10-09": "ESC384 13-15 · STA302 15-17", "10-10": "无课", "10-11": "无课"}}, "weekend": [{"id": "10-03", "label": "周六 10/3", "sun": "日落 18:54", "note": "今天目标：ESC384复习 + STA302作业 + LinkedIn/Resume 第1轮 + 长跑", "blocks": [["07:00", "07:30", "起床·洗漱·早餐（前晚备好）", "fixed"], ["07:30", "08:30", "早间视频（1h）", "video"], ["08:30", "10:30", "学习：ESC384 复习+预习（周一/周五 LEC）", "study"], ["10:30", "11:00", "做饭：备午餐+晚餐", "prep"], ["11:00", "12:30", "学习：STA302 作业", "study"], ["12:30", "13:00", "午餐（在家）", "eat"], ["13:00", "14:30", "学习：MIE375 复习 + 周二TUT问题准备", "study"], ["14:30", "16:00", "LinkedIn + Resume 修改（第1轮）", "job"], ["16:00", "16:30", "跑前加餐·换装·热身", "prep"], ["16:30", "18:00", "傍晚长跑 1.5h 往返（日落18:54，18:30前到家）", "run"], ["18:00", "19:00", "晚餐（米饭：昨晚已设预约煮好）", "eat"], ["19:00", "20:00", "晚间视频（1h）", "video"], ["20:00", "21:30", "读书（1.5h）", "read"], ["21:30", "22:30", "法语：B站课1集 + Duolingo 30min", "lang"], ["22:30", "23:00", "洗漱·设明天煮饭预约·收尾 → 23:00睡", "fixed"]]}, {"id": "10-04", "label": "周日 10/4", "sun": "日落 18:52", "note": "今天目标：CHE374预习 + 347作业 + LinkedIn/Resume 定稿 + 长跑", "blocks": [["07:00", "07:30", "起床·洗漱·早餐", "fixed"], ["07:30", "08:30", "早间视频（1h）", "video"], ["08:30", "10:30", "学习：CHE374 预习（周三3h LEC + 周四TUT）", "study"], ["10:30", "11:00", "做饭：备午餐+晚餐+下周便当食材（采购自行线上下单，不占计划时间）", "prep"], ["11:00", "12:00", "学习：预习下周 MIE375 / ESC384 讲义", "study"], ["12:00", "12:30", "午餐（在家，小碗饭）", "eat"], ["12:30", "14:00", "学习：STA347/MIE375 预习 + 347作业", "study"], ["14:00", "15:30", "LinkedIn + Resume 完善（定稿）", "job"], ["15:30", "16:00", "法语：B站课1集", "lang"], ["16:00", "16:15", "跑前准备", "prep"], ["16:15", "17:45", "傍晚长跑 1.5h 往返（日落18:52，18:20前到家）", "run"], ["17:45", "18:30", "晚餐", "eat"], ["18:30", "19:30", "晚间视频（1h）", "video"], ["19:30", "21:00", "读书（1.5h）", "read"], ["21:00", "21:45", "英语口语（ELSA + 影子跟读）", "lang"], ["21:45", "22:30", "下周计划确认（网站勾选每周任务）+ 煮饭预约 + Duolingo", "lang"], ["22:30", "23:00", "洗漱·放松 → 23:00睡（明早7:00起）", "fixed"]]}], "week": [{"id": "10-05", "label": "周一 10/5", "sun": "日落 18:51", "note": "课：MIE375 11-13 (BA B024)｜ESC384 13-15 (MC 254)", "blocks": [["07:00", "07:15", "起床洗漱", "fixed"], ["07:15", "08:15", "早间视频（1h）+早餐（重叠）", "video"], ["08:15", "09:00", "英语口语 45min（ELSA+跟读）", "lang"], ["09:00", "09:30", "做饭：备便当+晚餐", "prep"], ["09:30", "10:00", "预习今天 MIE375 / ESC384 讲义", "study"], ["10:00", "10:30", "收拾·出门准备", "prep"], ["10:30", "11:00", "通勤去学校（Duolingo 30min）", "commute"], ["11:00", "13:00", "上课 MIE375 LEC（BA B024）", "course"], ["13:00", "15:00", "上课 ESC384 LEC（MC 254）｜12:50课间快速加餐", "course"], ["15:00", "15:30", "通勤回家", "commute"], ["15:30", "16:00", "迟来午餐（便当）", "eat"], ["16:00", "17:30", "复习今天 MIE375+ESC384 笔记", "study"], ["17:30", "19:00", "晚餐+晚视频（重叠1h）", "video"], ["19:00", "20:30", "读书（1.5h）", "read"], ["20:30", "21:15", "法语：B站课1集（45min）", "lang"], ["21:15", "21:45", "STA302 作业", "study"], ["21:45", "22:00", "预习明天+设煮饭预约", "study"], ["22:00", "22:30", "洗漱就寝（22:00睡）", "fixed"]]}, {"id": "10-06", "label": "周二 10/6", "sun": "日落 18:49", "note": "课：STA347 11-13 (BR 200)｜MIE375 TUT 13-14 (MY 320)｜🏋️ 今早 7:00-8:30 健身（起床提前到 6:50）", "blocks": [["06:50", "07:00", "起床·快速洗漱·换健身服", "fixed"], ["07:00", "08:30", "健身 1.5h（力量+有氧，每周二固定）", "gym"], ["08:30", "09:00", "洗澡+早餐（燕麦+前晚煮好的蛋）", "fixed"], ["09:00", "10:00", "早间视频（1h，健身日后移）", "video"], ["10:00", "10:20", "做饭：备便当（今天简餐）", "prep"], ["10:20", "10:50", "通勤（Duolingo 30min）", "commute"], ["11:00", "13:00", "上课 STA347 LEC（BR 200）", "course"], ["13:00", "14:00", "上课 MIE375 TUT（MY 320）", "course"], ["14:00", "14:30", "通勤回家", "commute"], ["14:30", "15:15", "午餐（便当）+ 休息15min", "eat"], ["15:15", "16:45", "STA347 作业（347作业）", "study"], ["16:45", "18:15", "读书（1.5h）", "read"], ["18:15", "19:15", "晚餐+晚视频（重叠）", "video"], ["19:15", "20:00", "STA302 作业 + 预习明天 STA302", "study"], ["20:00", "20:45", "CHE374 预习（明晚3h LEC）", "study"], ["20:45", "21:30", "法语：B站课1集（45min）", "lang"], ["21:30", "21:45", "预习明天+设煮饭预约", "study"], ["21:45", "22:00", "收尾·洗漱", "fixed"], ["22:00", "22:30", "睡觉", "fixed"]]}, {"id": "10-07", "label": "周三 10/7", "sun": "日落 18:47", "note": "课：STA302 15-16 (AH 100)｜ESC301 17-18（时间待确认⚠️）｜CHE374 18-21 (SF 1105)", "blocks": [["07:00", "07:15", "起床洗漱", "fixed"], ["07:15", "08:15", "早间视频+早餐（重叠）", "video"], ["08:15", "09:45", "读书 1.5h（今天晚归，读书提前到早上）", "read"], ["09:45", "10:15", "做饭：备午餐+打包晚餐（课间吃）", "prep"], ["10:15", "11:45", "STA302 复习（下午课前）", "study"], ["11:45", "12:30", "午餐（在家）", "eat"], ["12:30", "13:30", "CHE374 预习（今晚3h LEC）", "study"], ["13:30", "14:15", "英语口语 45min（今晚没有晚间时段）", "lang"], ["14:15", "14:45", "通勤（Duolingo）", "commute"], ["14:45", "15:00", "到校·课前准备", "prep"], ["15:00", "16:00", "上课 STA302 LEC（AH 100）", "course"], ["16:00", "16:40", "课间：便当晚餐（主食+蛋白）", "eat"], ["16:40", "17:00", "课间：短视频通话（20min）", "video"], ["17:00", "18:00", "ESC301 LEC/TUT（时间以ACORN为准⚠️）", "course"], ["18:00", "21:00", "上课 CHE374 LEC（SF 1105，3h）", "course"], ["21:00", "21:30", "通勤回家", "commute"], ["21:30", "21:50", "快速洗漱+加餐（酸奶/香蕉）", "fixed"], ["21:50", "22:00", "就寝准备（今晚视频压缩，明天补足）", "fixed"], ["22:00", "22:30", "睡觉", "fixed"]]}, {"id": "10-08", "label": "周四 10/8", "sun": "日落 18:45", "note": "课：STA347 11-12 (SF 1105)｜MIE375 12-13 (BA 1220)｜CHE374 TUT 18-19 (MY 330)", "blocks": [["07:00", "07:15", "起床洗漱", "fixed"], ["07:15", "08:15", "早间视频+早餐（重叠）", "video"], ["08:15", "09:15", "复习 MIE375 + 预习 STA347（今天连堂）", "study"], ["09:15", "09:45", "做饭：备便当+晚餐", "prep"], ["09:45", "10:30", "出门准备 + 预习 CHE374 TUT 材料", "study"], ["10:30", "11:00", "通勤（Duolingo）", "commute"], ["11:00", "12:00", "上课 STA347 LEC（SF 1105）", "course"], ["12:00", "13:00", "上课 MIE375 LEC（BA 1220）", "course"], ["13:00", "13:40", "午餐（便当，campus）", "eat"], ["13:45", "14:15", "通勤回家", "commute"], ["14:15", "15:45", "读书（1.5h）", "read"], ["15:45", "16:45", "英语口语 45min + 休息", "lang"], ["16:45", "17:30", "法语：B站课1集 + Duolingo", "lang"], ["17:30", "18:00", "通勤去学校（路上吃根香蕉）", "commute"], ["18:00", "19:00", "上课 CHE374 TUT（MY 330）", "course"], ["19:00", "19:30", "通勤回家", "commute"], ["19:30", "20:30", "晚餐+晚视频（重叠，补足昨晚时长）", "video"], ["20:30", "21:30", "复习今天 STA347/MIE375/CHE374 TUT", "study"], ["21:30", "21:45", "预习明天 ESC384/STA302", "study"], ["21:45", "22:00", "收尾+煮饭预约", "study"], ["22:00", "22:30", "洗漱就寝", "fixed"]]}, {"id": "10-09", "label": "周五 10/9", "sun": "日落 18:44", "note": "课：ESC384 13-15 (GB 244)｜STA302 15-17 (MS 3153)", "blocks": [["07:00", "07:15", "起床洗漱", "fixed"], ["07:15", "08:15", "早间视频+早餐（重叠）", "video"], ["08:15", "09:45", "复习 ESC384 + STA302（今天连堂）", "study"], ["09:45", "10:15", "做饭：备便当+晚餐", "prep"], ["10:15", "10:45", "出门准备", "prep"], ["10:45", "11:15", "通勤（Duolingo）", "commute"], ["11:15", "12:45", "图书馆：STA302 作业收尾 + 英语口语 30min", "study"], ["12:45", "13:00", "快速午餐（便当）", "eat"], ["13:00", "15:00", "上课 ESC384 LEC（GB 244）", "course"], ["15:00", "17:00", "上课 STA302 LEC（MS 3153）", "course"], ["17:00", "17:30", "通勤回家", "commute"], ["17:30", "18:30", "晚餐+晚视频（重叠）", "video"], ["18:30", "20:00", "读书（1.5h）", "read"], ["20:00", "21:00", "法语：B站课1集 + Duolingo 补卡", "lang"], ["21:00", "21:45", "本周复盘（网站勾选）+ 周末计划确认", "study"], ["21:45", "22:00", "收尾+煮饭预约", "study"], ["22:00", "22:30", "洗漱就寝", "fixed"]]}, {"id": "10-10", "label": "周六 10/10", "sun": "日落 18:42", "note": "本周总复习 + 长跑（16:00-17:30）", "blocks": [["07:00", "07:30", "起床·洗漱·早餐", "fixed"], ["07:30", "08:30", "早间视频（1h）", "video"], ["08:30", "10:30", "学习：本周4门总复习（笔记+错题）", "study"], ["10:30", "11:00", "做饭：备午餐+晚餐", "prep"], ["11:00", "12:30", "作业：MIE375 / CHE374（如有）", "study"], ["12:30", "13:00", "午餐（在家）", "eat"], ["13:00", "14:00", "英语口语强化 + 法语复习", "lang"], ["14:00", "15:30", "读书（1.5h）", "read"], ["15:30", "16:00", "跑前加餐·换装·热身", "prep"], ["16:00", "17:30", "傍晚长跑 1.5h 往返（日落18:42）", "run"], ["17:30", "18:15", "晚餐", "eat"], ["18:15", "19:15", "晚间视频（1h）", "video"], ["19:15", "20:30", "作业/项目推进", "study"], ["20:30", "21:30", "法语：B站课1集 + Duolingo", "lang"], ["21:30", "22:30", "自由时间（弹性：社交/休息/补进度）", "fixed"], ["22:30", "23:00", "洗漱·设明天煮饭预约", "fixed"]]}, {"id": "10-11", "label": "周日 10/11", "sun": "日落 18:40", "note": "下周预习 + 长跑（16:30-18:00）+ 每周反馈给 WorkBuddy", "blocks": [["07:00", "07:30", "起床·洗漱·早餐", "fixed"], ["07:30", "08:30", "早间视频（1h）", "video"], ["08:30", "10:30", "学习：下周新课预习（周一 MIE375/ESC384）", "study"], ["10:30", "11:00", "做饭：备午餐+晚餐（采购自行线上下单，不占计划时间）", "prep"], ["11:00", "12:00", "学习：预习周一 MIE375 / ESC384 讲义", "study"], ["12:00", "12:30", "午餐（在家）", "eat"], ["12:30", "14:00", "作业/项目收尾", "study"], ["14:00", "15:30", "读书（1.5h）", "read"], ["15:30", "16:00", "法语：B站课1集", "lang"], ["16:00", "16:30", "跑前加餐·换装·热身", "prep"], ["16:30", "18:00", "傍晚长跑 1.5h 往返（日落18:40，18:30前到家）", "run"], ["18:00", "18:45", "晚餐", "eat"], ["18:45", "19:45", "晚间视频（1h）", "video"], ["19:45", "20:30", "英语口语（ELSA+跟读）", "lang"], ["20:30", "21:15", "【每周反馈】导出周报告 → 发WorkBuddy → 生成下周新计划", "feedback"], ["21:15", "21:45", "Duolingo 30min", "lang"], ["21:45", "22:30", "下周便当准备 + 煮饭预约 + 洗漱", "prep"], ["22:30", "23:00", "放松就寝（下周一 7:00 起）", "fixed"]]}], "diet": [{"date": "10-03", "label": "周六 10/3", "lunch": "鸡胸150g煎 + 乌冬面汤（乌冬1包+青菜）", "snack": "苹果 + 杏仁10颗", "dinner": "烤去皮鸡腿2只 + 生菜沙拉 + 小番茄", "rice": "今天不吃米饭，无需预约", "kcal": "~1700"}, {"date": "10-04", "label": "周日 10/4", "lunch": "虾仁滑蛋 + 小碗杂粮饭（减半60g）", "snack": "希腊酸奶 + 蓝莓", "dinner": "清蒸鳕鱼/龙利鱼 + 芦笋 + 玉米半根", "rice": "昨晚22:00设预约（少量60g）→ 18:00饭好", "kcal": "~1650"}, {"date": "10-05", "label": "周一 10/5（便当日）", "lunch": "便当：鸡胸+米饭80g+冷冻混合蔬菜（campus）", "snack": "香蕉 + 乳清蛋白", "dinner": "乌冬面炒牛肉+洋葱（乌冬1包，主食换乌冬）", "rice": "昨晚22:00设预约（80g量）→ 早上盛入便当", "kcal": "~1700"}, {"date": "10-06", "label": "周二 10/6（便当·健身日）", "lunch": "便当：吞拿鱼罐头+米饭80g+黄瓜番茄", "snack": "苹果 + 蛋白棒", "dinner": "乌冬面汤+煎鸡胸（乌冬1包+青菜）", "rice": "昨晚设预约（80g量）→ 便当用", "kcal": "~1680"}, {"date": "10-07", "label": "周三 10/7（晚课打包日）", "lunch": "在家：乌冬面汤+溏心蛋（乌冬1包）", "snack": "希腊酸奶", "dinner": "打包便当：鸡肉+米饭80g+菜（16:00课间吃）；回家21:30加餐酸奶", "rice": "昨晚设预约 → 早上盛入保温盒", "kcal": "~1700"}, {"date": "10-08", "label": "周四 10/8（便当日）", "lunch": "便当：鸡蛋+米饭80g+菠菜", "snack": "香蕉 + 蛋白粉", "dinner": "煎三文鱼/鲭鱼罐头 + 沙拉 + 玉米半根", "rice": "昨晚设预约（80g量）→ 便当用", "kcal": "~1680"}, {"date": "10-09", "label": "周五 10/9（便当日）", "lunch": "便当：鸡胸+米饭80g+菜（13:00课前）", "snack": "酸奶 + 坚果", "dinner": "虾仁炒乌冬（乌冬1包+西葫芦，每周1次自由餐可放今天）", "rice": "昨晚设预约（80g量）→ 便当用", "kcal": "~1700"}, {"date": "10-10", "label": "周六 10/10", "lunch": "牛肉炒西兰花 + 乌冬面（1包）", "snack": "苹果", "dinner": "烤鸡腿(去皮) + 沙拉", "rice": "今天不吃米饭，无需预约", "kcal": "~1700"}, {"date": "10-11", "label": "周日 10/11", "lunch": "鸡胸沙拉 + 全麦面包", "snack": "希腊酸奶", "dinner": "清蒸鱼 + 芦笋 + 乌冬面汤（半包）", "rice": "今天不吃米饭，无需预约", "kcal": "~1600"}], "resources": [["英语口语", "ELSA Speak（AI发音纠正，每天45min核心工具）", "https://elsaspeak.com"], ["英语口语", "Cambly（随时连线母语外教，按分钟计费）", "https://www.cambly.com"], ["英语口语", "italki（性价比高的1对1外教，每周1-2节课）", "https://www.italki.com"], ["英语口语", "BBC Learning English · 6 Minute English（跟读素材）", "https://www.bbc.co.uk/learningenglish"], ["英语口语", "YouGlish（查任何单词的真实母语者发音）", "https://youglish.com"], ["英语口语", "Engoo Daily News（分级新闻，适合影子跟读）", "https://www.engoo.com"], ["英语口语", "UofT Toastmasters（校内线下演讲俱乐部，练表达+Networking）", "https://www.toastmasters.org"], ["法语", "B站法语课程（BV1mv411V7Lx，目前学到 p7，每周3集）", "https://www.bilibili.com/video/BV1mv411V7Lx/"], ["法语", "Duolingo（每天30min，安排在通勤路上完成）", "https://www.duolingo.com"]], "advice": ["【headline】不要只写学生。格式：专业方向 + 正在做什么。例：Engineering Student @ UofT | Data & Systems | Open to 2027 Summer Intern。包含关键词，招聘方按 headline 搜索。", "【About】3-5行讲故事：你是谁、在学什么、做过什么项目、想要什么（实习方向），最后一句明确 call-to-action（欢迎联系）。第一句话最重要，前3行决定别人是否点开 more。", "【Experience】每段用 3-4 条 bullet，动词开头 + 量化结果（STAR）：做了什么→怎么做→结果如何（数字！提升x%、服务x人、完成x个）。", "【Projects】把课程大作业当成项目写：ESC384/STA302/MIE375 的 project 都是素材，写清技术栈和方法论。招聘方很看重这个。", "【Skills】至少填 15 个：Python, MATLAB, R, SQL, Excel, LaTeX, 数据分析, 优化建模 等。让同学 endorse 前 3 个核心技能（技能排序会受 endorsement 影响）。", "【拓展】连接策略：每周加 10-20 个：同校学长（目标行业）、上过课的教授、招聘者。附一句个性化 note，不要空白邀请。加入 UofT 相关 group。", "【活跃度】每周至少发/转评 1 次：课程项目小结、行业新闻观点。算法会奖励活跃账号，曝光度显著提高。", "【Resume·格式】一页！UofT 学生用 UofT 模板或简洁单栏。文件名：Jikun_Chang_Resume.pdf。PDF 格式投递。字体 10.5-11pt，留白充足，无照片无年龄。", "【Resume·内容】顺序：Education（含 GPA>3.3 才写）→ Experience → Projects → Skills → (Awards)。每条 bullet 都是动词开头：Designed, Built, Analyzed, Optimized, Reduced…", "【Resume·量化】没有数字就创造参照系：'reduced runtime by 40%'、'analyzed 10k-row dataset'、'led team of 4'。可信的小数字好过空泛的大词。", "【Resume·ATS】大公司用机器初筛：对照 JD 把关键词原样写进 resume（如 'Python' 而不是 'Py'）；不要用表格/文本框/图标，纯文本布局最安全。", "【Resume·一岗一版】投不同方向（数据/工程/研究）用不同侧重的 resume。建立主简历 + 每次按 JD 微调 15 分钟的习惯。"], "grocery": [{"label": "周六 10/3", "meals": "午:鸡胸煎+乌冬汤 / 晚:烤鸡腿+沙拉", "items": "鸡胸肉150g｜乌冬面1包｜青菜300g｜生菜1颗、小番茄1盒｜去皮鸡腿2只｜苹果1个、杏仁10颗"}, {"label": "周日 10/4", "meals": "午:虾仁滑蛋+小碗杂粮饭 / 晚:清蒸鱼+芦笋+玉米", "items": "虾仁200g｜鸡蛋4个｜杂粮米60g(干)｜鳕鱼/龙利鱼300g｜芦笋1把｜玉米2根｜希腊酸奶1杯、蓝莓1小盒"}, {"label": "周一 10/5（便当日）", "meals": "午:便当鸡胸+米饭80g+菜 / 晚:乌冬炒牛肉洋葱", "items": "鸡胸肉300g｜白米80g(干)｜冷冻混合蔬菜300g｜乌冬面1包｜牛肉250g、洋葱1个｜香蕉1根"}, {"label": "周二 10/6（便当·健身日）", "meals": "午:便当吞拿鱼+米饭80g+蔬菜 / 晚:乌冬汤+煎鸡胸", "items": "吞拿鱼罐头2罐｜白米80g(干)｜黄瓜1根、番茄2个｜鸡胸肉300g｜乌冬面1包｜青菜300g｜苹果1个"}, {"label": "周三 10/7（晚课打包日）", "meals": "午:乌冬汤+溏心蛋 / 晚:打包便当+回家酸奶加餐", "items": "乌冬面1包｜鸡蛋2个｜鸡胸肉300g｜白米80g(干)｜绿叶蔬菜300g｜希腊酸奶2杯（晚归加餐）"}, {"label": "周四 10/8（便当日）", "meals": "午:便当鸡蛋+米饭80g+菠菜 / 晚:煎三文鱼+沙拉+玉米", "items": "鸡蛋4个｜菠菜1把｜白米80g(干)｜三文鱼300g（或鲭鱼罐头）｜沙拉菜1袋｜玉米2根｜香蕉1根"}, {"label": "周五 10/9（便当·自由餐）", "meals": "午:便当鸡胸+米饭80g+菜 / 晚:虾仁炒乌冬+西葫芦", "items": "鸡胸肉300g｜白米80g(干)｜虾仁200g、西葫芦1根｜乌冬面1包｜酸奶1杯、混合坚果1小袋"}, {"label": "周六 10/10", "meals": "午:牛肉炒西兰花+乌冬 / 晚:烤鸡腿+沙拉", "items": "牛肉300g｜西兰花300g｜乌冬面1包｜去皮鸡腿2只｜沙拉菜、小番茄｜苹果1个"}, {"label": "周日 10/11", "meals": "午:鸡胸沙拉+全麦面包 / 晚:清蒸鱼+芦笋+乌冬半包", "items": "鸡胸肉300g｜沙拉菜1袋、全麦面包1条｜清蒸鱼300g｜芦笋1把｜乌冬面半包｜希腊酸奶1杯"}], "shop": [["蛋白质（一周总量）", "鸡胸肉 ~2kg｜鱼类(鳕鱼/三文鱼/龙利鱼) ~900g｜虾仁 400g｜牛肉 550g｜去皮鸡腿 4只｜鸡蛋 ~20个｜吞拿鱼罐头2 + 鲭鱼罐头1（备选）"], ["奶制品", "牛奶 1.75L｜希腊酸奶 5杯｜乳清蛋白 1桶（应急加餐用）"], ["主食（米饭已减量）", "乌冬面 6包（主要晚餐主食）｜燕麦 350g｜白米 ~350g（仅便当日午餐，每餐80g）｜杂粮米 少量｜全麦面包 1条"], ["蔬果", "冷冻西兰花 2袋｜冷冻混合蔬菜 2袋｜青菜/菠菜/生菜/沙拉菜 各1-2份｜西葫芦、洋葱、黄瓜、番茄/小番茄｜芦笋 2把｜玉米 4根｜苹果 4个｜香蕉 3根｜蓝莓 1盒"], ["坚果零食", "杏仁 1小袋｜混合坚果 1袋｜蛋白棒 2根（应急）"], ["罐头调料", "番茄罐头 1罐｜白芸豆罐头 1罐（备选）｜橄榄油（喷雾瓶更省油）｜黑胡椒、盐、蒜粉"]], "reminders": [{"id": "gym", "when": "周二 07:00", "text": "🏋️ 周二健身出发（7:00-8:30，起床提前到6:50）", "days": [2], "times": ["07:00"]}, {"id": "rice", "when": "每天 22:00", "text": "🍚 设电饭煲预约 + 收尾（查饮食计划：乌冬日无需预约）", "days": null, "times": ["22:00"]}, {"id": "runSat", "when": "周六 16:00", "text": "🏃 长跑出发（赶在日落前到家）", "days": [6], "times": ["16:00"]}, {"id": "runSun", "when": "周日 16:15", "text": "🏃 长跑出发（赶在日落前到家）", "days": [0], "times": ["16:15"]}, {"id": "weigh", "when": "周日 07:10", "text": "⚖️ 晨起空腹称重，记录进周反馈", "days": [0], "times": ["07:10"]}, {"id": "fb", "when": "周日 20:30", "text": "📊 每周反馈：网站生成反馈文本→复制→粘贴给 WorkBuddy", "days": [0], "times": ["20:30"]}], "tips": ["每日约1650-1750 kcal，蛋白质≥130g（1.8g/kg）", "米饭每餐≤150g熟重，晚餐主食减半", "每天喝水2.5L，戒含糖饮料；每周1次自由餐", "早上一次做好全天餐食，午餐带便当，晚餐微波+预约米饭", "每周日晨起空腹称重，目标 -0.5~0.75kg/周"]};
+const LS = "jkplan_v1";
+let S = load();
+function load(){ try{ return JSON.parse(localStorage.getItem(LS)) || {} }catch(e){ return {} } }
+function save(){ localStorage.setItem(LS, JSON.stringify(S)); }
+S.status = S.status || {}; S.diet = S.diet || {}; S.todos = S.todos || [];
+S.custom = S.custom || {}; S.rem = S.rem || {}; S.shop = S.shop || {}; S.fired = S.fired || {}; S.customRem = S.customRem || [];
+
+const CAT = {
+  fixed:{n:"作息", c:"#94a3b8", bg:"#1e293b"}, video:{n:"视频", c:"#a78bfa", bg:"#231a3d"},
+  study:{n:"学习", c:"#60a5fa", bg:"#12233f"}, course:{n:"上课", c:"#f87171", bg:"#36191c"},
+  commute:{n:"通勤", c:"#cbd5e1", bg:"#182238"}, eat:{n:"餐食", c:"#fbbf24", bg:"#332408"},
+  run:{n:"长跑", c:"#34d399", bg:"#0d2b1c"}, gym:{n:"健身", c:"#818cf8", bg:"#1e1b3a"},
+  read:{n:"读书", c:"#2dd4bf", bg:"#0d2b2a"}, lang:{n:"语言", c:"#f472b6", bg:"#331525"},
+  job:{n:"求职", c:"#fb923c", bg:"#33200c"}, prep:{n:"备餐", c:"#a3e635", bg:"#1c2a0a"},
+  feedback:{n:"反馈", c:"#38bdf8", bg:"#0b2537"},
+};
+const ALL = [["weekend",PLAN.weekend],["week",PLAN.week]];
+let EDITMODE = {weekend:false, week:false};
+let EDIT = null; // {pk, dayId, idx}
+
+function mins(t){ const[a,b]=t.split(":"); return +a*60+ +b; }
+function hrs(s,e){ return (mins(e)-mins(s))/60; }
+function todayId(){ const d=new Date(); return String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+
+/* ---------- custom blocks (计划可编辑) ---------- */
+function getBlocks(pk, day){ const k=pk+"-"+day.id; return S.custom[k] ? S.custom[k] : day.blocks; }
+function setBlocks(pk, dayId, blocks){
+  const k=pk+"-"+dayId;
+  if(blocks) S.custom[k]=blocks; else delete S.custom[k];
+  save();
+}
+
+/* ---------- header/meta ---------- */
+document.getElementById("metaLine").innerHTML =
+  `${PLAN.meta.period} · ${PLAN.meta.student} · ${PLAN.meta.commute}｜目标：<b>英语口语</b> / <b>法语</b> / <b>读书 1.5h/天</b> / <b>周二健身+周末长跑</b> / <b>减脂</b>（70kg·~1700kcal）/ <b>LinkedIn+Resume</b>`;
+
+/* ---------- tabs ---------- */
+const TABS = [["pane-weekend","🏃 本周末"],["pane-week","📅 下周计划"],["pane-tasks","✍️ 每周任务"],
+  ["pane-diet","🍱 饮食计划"],["pane-grocery","🛒 食材清单"],["pane-res","📚 学习资源"],
+  ["pane-report","📊 周报告&反馈"],["pane-remind","⏰ 提醒"],["pane-data","💾 数据管理"]];
+const nav = document.getElementById("tabs");
+TABS.forEach(([id,label],i)=>{
+  const b=document.createElement("button"); b.className="tab"+(i===0?" active":""); b.textContent=label; b.dataset.pane=id;
+  b.onclick=()=>showPane(id); nav.appendChild(b);
+});
+function showPane(id){
+  document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("show",p.id===id));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.pane===id));
+}
+
+/* ---------- day cards ---------- */
+function renderDays(){
+  const tid = todayId();
+  for(const [pk,list] of ALL){
+    const wrap = document.getElementById(pk==="weekend"?"daysWeekend":"daysWeek");
+    wrap.innerHTML = "";
+    list.forEach(day=>{
+      const el = document.createElement("div");
+      el.className = "day" + (day.id===tid ? " today" : "");
+      wrap.appendChild(el);
+      renderDay(el, day, pk);
+    });
+  }
+}
+function renderDay(el, day, pk){
+  const blocks = getBlocks(pk, day);
+  let done=0, miss=0, total=blocks.length;
+  blocks.forEach((b,i)=>{ const st=S.status[pk+"-"+day.id+"-"+i]; if(st==="done")done++; if(st==="miss")miss++; });
+  const pct = total? Math.round(done/total*100):0;
+  const tt = PLAN.meta.timetable[day.id];
+  el.innerHTML = `
+    <div class="day-h">
+      <div class="t">${day.label}${day.id===todayId()?' <span style="color:#22d3ee;font-size:11px;">· 今天</span>':''}${S.custom[pk+"-"+day.id]?' <span style="color:#fbbf24;font-size:10px;">·已改</span>':''}</div>
+      <div class="sun">🌇 ${day.sun}${tt?" ｜ 🏫 "+tt:""}</div>
+      <div class="note">${day.note}</div>
+      <div class="pbar"><div style="width:${pct}%"></div></div>
+      <div class="pnum">完成 ${done}/${total} · 打叉 ${miss} · ${pct}%</div>
+    </div>
+    <div class="blocks"></div>`;
+  const box = el.querySelector(".blocks");
+  blocks.forEach((b,i)=>{
+    const id = pk+"-"+day.id+"-"+i, st = S.status[id];
+    const [s,e,txt,cat] = b, C = CAT[cat]||CAT.fixed;
+    const d = document.createElement("div");
+
+    if(EDIT && EDIT.pk===pk && EDIT.dayId===day.id && EDIT.idx===i){
+      d.className = "blk editing"; d.style.background = C.bg; d.style.borderColor = "#3b5a9e";
+      d.innerHTML = `
+        <div class="eform">
+          <input id="ed-s" value="${s}" placeholder="开始 hh:mm">
+          <input id="ed-e" value="${e}" placeholder="结束 hh:mm">
+          <select id="ed-cat">${Object.entries(CAT).map(([k,v])=>`<option value="${k}" ${k===cat?'selected':''}>${v.n}</option>`).join("")}</select>
+          <input class="full" id="ed-txt" value="${String(txt).replace(/"/g,'&quot;')}" placeholder="内容">
+        </div>
+        <div class="row" style="margin:2px 0 0">
+          <button class="btn" style="padding:5px 14px;font-size:12px" onclick="saveEdit('${pk}','${day.id}',${i})">💾 保存</button>
+          <button class="btn ghost" style="padding:5px 14px;font-size:12px" onclick="cancelEdit()">取消</button>
+        </div>`;
+      box.appendChild(d); return;
+    }
+
+    d.className = "blk"+(st==="done"?" done":"")+(st==="miss"?" missed":"");
+    d.style.background = C.bg; if(st!=="done") d.style.borderColor="#233156";
+    let ops = `
+      <button class="op ${st==='done'?'on-ok':''}" title="完成" onclick="setStatus('${id}','done')">✓</button>
+      <button class="op ${st==='miss'?'on-miss':''}" title="没做到" onclick="setStatus('${id}','miss')">✗</button>`;
+    if(EDITMODE[pk]){
+      ops += `
+      <button class="op" title="编辑" onclick="startEdit('${pk}','${day.id}',${i})" style="color:#93c5fd">✎</button>
+      <button class="op" title="删除" onclick="delBlock('${pk}','${day.id}',${i})" style="color:#fca5a5">🗑</button>`;
+    }
+    d.innerHTML = `
+      <div class="tm">${s}<br>${e}</div>
+      <div class="tx"><small style="color:${C.c};border:1px solid ${C.c}55;">${C.n}</small>${txt}</div>
+      <div class="ops">${ops}</div>`;
+    box.appendChild(d);
+  });
+  if(EDITMODE[pk]){
+    const add = document.createElement("div");
+    add.className="day-add";
+    add.innerHTML = `
+      <button class="btn ghost" style="padding:5px 12px;font-size:12px" onclick="addBlock('${pk}','${day.id}')">＋ 添加条目</button>
+      ${S.custom[pk+"-"+day.id]?`<button class="btn warn" style="padding:5px 12px;font-size:12px" onclick="resetDay('${pk}','${day.id}')">↺ 恢复默认</button>`:""}`;
+    box.appendChild(add);
+  }
+}
+function setStatus(id, val){
+  S.status[id] = (S.status[id]===val) ? undefined : val;
+  if(!S.status[id]) delete S.status[id];
+  save(); renderDays(); renderStats();
+}
+function toggleEdit(pk){
+  EDITMODE[pk]=!EDITMODE[pk]; EDIT=null; renderDays();
+  toast(EDITMODE[pk] ? "编辑模式已开启：✎改 · 🗑删 · 底部＋添加（编辑后当天勾选按新顺序生效）" : "已退出编辑模式");
+}
+function startEdit(pk, dayId, i){ EDIT={pk,dayId,idx:i}; renderDays(); }
+function cancelEdit(){ EDIT=null; renderDays(); }
+function saveEdit(pk, dayId, i){
+  const s=document.getElementById("ed-s").value.trim();
+  const e=document.getElementById("ed-e").value.trim();
+  const cat=document.getElementById("ed-cat").value;
+  const txt=document.getElementById("ed-txt").value.trim()||"新条目";
+  const blocks=[...getBlocks(pk,{id:dayId})];
+  blocks[i]=[s,e,txt,cat];
+  setBlocks(pk,dayId,blocks); EDIT=null; renderDays(); toast("已保存 ✓");
+}
+function delBlock(pk, dayId, i){
+  const blocks=[...getBlocks(pk,{id:dayId})];
+  blocks.splice(i,1);
+  setBlocks(pk,dayId,blocks); renderDays();
+}
+function addBlock(pk, dayId){
+  const blocks=[...getBlocks(pk,{id:dayId})];
+  blocks.push(["12:00","13:00","新条目（点✎修改）","study"]);
+  setBlocks(pk,dayId,blocks); renderDays();
+}
+function resetDay(pk, dayId){
+  if(!confirm("恢复这天为默认计划？该天的手动编辑将丢失。")) return;
+  setBlocks(pk,dayId,null); renderDays();
+}
+function resetEdits(){
+  if(!confirm("恢复全部计划为默认版？所有手动编辑将丢失（勾选记录保留）。")) return;
+  S.custom={}; save(); renderDays(); toast("已恢复默认计划");
+}
+window.setStatus=setStatus; window.toggleEdit=toggleEdit; window.startEdit=startEdit;
+window.cancelEdit=cancelEdit; window.saveEdit=saveEdit; window.delBlock=delBlock;
+window.addBlock=addBlock; window.resetDay=resetDay; window.resetEdits=resetEdits;
+
+/* ---------- todos ---------- */
+function renderTodos(){
+  const box = document.getElementById("todoEditor"); box.innerHTML="";
+  S.todos.forEach((t,i)=>{
+    const r=document.createElement("div"); r.className="todo-row";
+    r.innerHTML = `
+      <input class="f d" value="${(t.date||'').replace(/"/g,'&quot;')}" placeholder="日期 如 10/5" onchange="upTodo(${i},'date',this.value)">
+      <input class="f t" value="${(t.text||'').replace(/"/g,'&quot;')}" placeholder="任务内容（自己写）" onchange="upTodo(${i},'text',this.value)">
+      <input class="f n" value="${(t.note||'').replace(/"/g,'&quot;')}" placeholder="备注" onchange="upTodo(${i},'note',this.value)">
+      <input type="checkbox" class="ck" ${t.done?'checked':''} onchange="upTodo(${i},'done',this.checked)">
+      <button class="op" title="加进提醒" onclick="todoRemind(${i})" style="color:#38bdf8">⏰</button>
+      <button class="op" title="删除" onclick="delTodo(${i})">🗑</button>`;
+    box.appendChild(r);
+  });
+  if(!S.todos.length){ box.innerHTML='<p style="color:var(--muted);font-size:13px;margin-bottom:12px">还没有任务，点下面按钮添加 ↓</p>'; }
+}
+function upTodo(i,k,v){ S.todos[i][k]=v; save(); }
+function delTodo(i){ S.todos.splice(i,1); save(); renderTodos(); }
+function addTodo(){ S.todos.push({date:"",text:"",note:"",done:false}); save(); renderTodos();
+  const inp=document.querySelectorAll("#todoEditor .todo-row:last-child input"); if(inp[1]) inp[1].focus(); }
+function todoRemind(i){
+  const t = S.todos[i];
+  const d = prompt("提醒日期（月/日，如 10/5）：", t.date || "10/" + (new Date().getDate()+1));
+  if(!d) return;
+  const tm = prompt("提醒时间（如 09:00）：", "09:00");
+  if(!tm) return;
+  S.customRem = S.customRem || [];
+  S.customRem.push({id:"todo-"+Date.now(), text:"📌 " + (t.text||"我的任务"), date:d.trim(), time:tm.trim(), on:true});
+  save(); renderRem(); toast("已加入提醒：" + d.trim() + " " + tm.trim() + "（也会包含在日历导出里）");
+}
+window.todoRemind=todoRemind;
+window.upTodo=upTodo; window.delTodo=delTodo; window.addTodo=addTodo;
+
+/* ---------- diet ---------- */
+function renderDiet(){
+  const tips = document.getElementById("dietTips");
+  tips.innerHTML = PLAN.tips.map(t=>`<span class="chip" style="background:#12233b;color:#93c5fd">${t}</span>`).join("");
+  let h = `<table class="tbl"><tr><th style="width:120px">日期</th><th>午餐</th><th>加餐</th><th>晚餐</th><th style="width:150px">米饭预约</th><th style="width:70px">热量</th><th style="width:70px">按计划?</th></tr>`;
+  PLAN.diet.forEach(d=>{
+    const on = S.diet[d.date];
+    h += `<tr>
+      <td><b>${d.label}</b></td><td>${d.lunch}</td><td>${d.snack}</td><td>${d.dinner}</td>
+      <td><div class="rice">⏲ ${d.rice}</div></td><td style="text-align:center">${d.kcal}</td>
+      <td style="text-align:center"><input type="checkbox" class="ck" ${on?'checked':''} onchange="S.diet['${d.date}']=this.checked;save()"></td></tr>`;
+  });
+  h += "</table>";
+  document.getElementById("dietTable").innerHTML = h;
+}
+
+/* ---------- grocery ---------- */
+function renderGrocery(){
+  let h = `<table class="tbl"><tr><th style="width:150px">日期</th><th style="width:35%">当天吃什么</th><th>当天需要的材料（早餐模板另计）</th></tr>`;
+  PLAN.grocery.forEach(g=>{
+    h += `<tr><td><b>${g.label}</b></td><td style="color:#c7d5ef">${g.meals}</td><td style="color:#a7d796">${g.items}</td></tr>`;
+  });
+  h += `</table>
+  <div class="hint" style="margin-top:14px">🍳 早餐固定模板材料（每天）：<b>燕麦 50g + 牛奶 250ml + 鸡蛋 2 个</b>（鸡蛋前晚煮好）。做菜时间：早上 <b>10:00-10:30</b> 一次备好全天，有课日午餐装便当带走。</div>`;
+  document.getElementById("groceryTable").innerHTML = h;
+
+  const bought = PLAN.shop.filter((_,i)=>S.shop[i]).length;
+  let sh = `<div style="font-size:12px;color:var(--muted);margin-bottom:10px">已买 ${bought}/${PLAN.shop.length} 类</div>`;
+  PLAN.shop.forEach((s,i)=>{
+    sh += `<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #1d2c4d">
+      <input type="checkbox" class="ck" ${S.shop[i]?'checked':''} onchange="S.shop[${i}]=this.checked;save();renderGrocery()">
+      <div><b style="color:#93c5fd;font-size:13.5px">${s[0]}</b><div style="font-size:12.5px;color:#a9bacf;margin-top:3px;line-height:1.7">${s[1]}</div></div></div>`;
+  });
+  document.getElementById("shopBox").innerHTML = sh;
+}
+
+/* ---------- resources & advice ---------- */
+function renderRes(){
+  let h = `<table class="tbl"><tr><th style="width:90px">类别</th><th>资源</th><th>链接</th></tr>`;
+  PLAN.resources.forEach(([cat,txt,url])=>{
+    h += `<tr><td style="color:${cat==='法语'?'#f472b6':'#60a5fa'}"><b>${cat}</b></td><td>${txt}</td><td><a class="link" href="${url}" target="_blank">${url.replace(/^https?:\/\/(www\.)?/,'').slice(0,42)}</a></td></tr>`;
+  });
+  h += "</table>";
+  document.getElementById("resBox").innerHTML = h;
+  document.getElementById("adviceBox").innerHTML = PLAN.advice.map(a=>`<li>${a}</li>`).join("");
+}
+
+/* ---------- report & analysis ---------- */
+function collect(){
+  const out = {days:[], cat:{}, missedCat:{}, doneN:0, missN:0, pendN:0, doneH:0};
+  for(const [pk,list] of ALL){
+    list.forEach(day=>{
+      const blocks = getBlocks(pk, day);
+      let dn=0,ms=0,pd=0; const missedItems=[];
+      blocks.forEach((b,i)=>{
+        const st=S.status[pk+"-"+day.id+"-"+i];
+        const [s,e,txt,cat]=b;
+        if(st==="done"){dn++; out.doneN++; out.doneH+=hrs(s,e); out.cat[cat]=(out.cat[cat]||0)+hrs(s,e);}
+        else if(st==="miss"){ms++; out.missN++; missedItems.push(txt); out.missedCat[cat]=(out.missedCat[cat]||0)+1;}
+        else pd++, out.pendN++;
+      });
+      out.days.push({label:day.label, dn, ms, pd, total:blocks.length, missed:missedItems, pk, dayId:day.id});
+    });
+  }
+  return out;
+}
+function renderStats(){
+  const c = collect();
+  const total = c.doneN+c.missN+c.pendN;
+  const pct = total? Math.round(c.doneN/total*100):0;
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="v">${pct}%</div><div class="k">总完成率（${c.doneN}/${total} 项）</div></div>
+    <div class="stat"><div class="v">${c.doneN}</div><div class="k">✓ 已完成</div></div>
+    <div class="stat"><div class="v">${c.missN}</div><div class="k">✗ 未做到</div></div>
+    <div class="stat"><div class="v">${c.doneH.toFixed(1)}h</div><div class="k">已完成总时长</div></div>`;
+  let h="";
+  c.days.forEach(d=>{
+    const p = d.total? Math.round(d.dn/d.total*100):0;
+    h += `<div style="display:flex;align-items:center;gap:10px;margin:7px 0;">
+      <div style="width:90px;font-size:12.5px;color:var(--muted)">${d.label}</div>
+      <div style="flex:1;height:8px;background:#0d1730;border-radius:99px;overflow:hidden"><div style="width:${p}%;height:100%;background:linear-gradient(90deg,#5b8cff,#22d3ee)"></div></div>
+      <div style="width:110px;font-size:12px;text-align:right;color:${p>=80?'#86efac':p>=50?'#fbbf24':'#fca5a5'}">${d.dn}/${d.total} · ${p}%</div></div>`;
+  });
+  document.getElementById("dayRates").innerHTML = h;
+  let ch="";
+  Object.entries(c.cat).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+    const C=CAT[k]||CAT.fixed;
+    ch+=`<span class="chip" style="background:${C.bg};color:${C.c};border:1px solid ${C.c}55">${C.n} ${v.toFixed(1)}h</span>`;
+  });
+  document.getElementById("catHours").innerHTML = ch || '<span style="color:var(--muted);font-size:12.5px">还没有勾选记录</span>';
+  document.getElementById("missList").innerHTML =
+    c.days.flatMap(d=>d.missed.map(m=>`<li>${d.label}：${m}</li>`)).join("") ||
+    '<li style="color:var(--muted);list-style:none;margin-left:0">暂无未完成项（或还没打 ✗）</li>';
+  renderAnalysis(c, pct, total);
+}
+function renderAnalysis(c, pct, total){
+  const sug = [];
+  const rated = c.days.filter(d=>d.dn+d.ms>0).map(d=>({...d, p: d.total? d.dn/d.total : 0}));
+  if(total===0 || (c.doneN+c.missN)===0){
+    sug.push("还没有足够的勾选数据。先正常打卡几天，「智能分析」会在每周日复盘时自动给出针对性建议。");
+  } else {
+    const worst = rated.slice().sort((a,b)=>a.p-b.p)[0];
+    const best  = rated.slice().sort((a,b)=>b.p-a.p)[0];
+    if(pct>=85) sug.push(`<b>整体完成率 ${pct}%，非常棒。</b>计划强度合适，可以保持；也可以考虑把「未勾选项」里最有价值的一两项固化成习惯。`);
+    else if(pct>=60) sug.push(`整体完成率 <b>${pct}%</b>，中上水平。建议把没完成的项挪到完成率最高的那天（${best?best.label:"完成率最高日"}）试试。`);
+    else sug.push(`整体完成率 <b>${pct}%</b> 偏低 —— 大概率是计划排得太满，不是执行力问题。建议每天删掉 2-3 个低优先级条目（点「✏️ 编辑计划」直接删），先保证上课、作业、健身、睡眠这四类 100%。`);
+    if(worst && worst.p<0.5) sug.push(`<b>${worst.label}</b> 完成率最低（${Math.round(worst.p*100)}%）。检查一下当天是否课太满/太累：把当天的读书或口语挪到别的天，或直接在网站里把当天改轻。`);
+    const mc = Object.entries(c.missedCat).sort((a,b)=>b[1]-a[1]);
+    if(mc.length){
+      const [k,n] = mc[0], C=CAT[k]||{n:k};
+      const tips = {
+        study:"学习任务连续未完成 → 拆成更小的块（25min 番茄钟），并把最难的一块放在精力最好的上午。",
+        lang:"语言学习总被打断 → 绑定固定锚点：通勤=Duolingo、晚饭后=口语15min，锚点比意志力可靠。",
+        read:"读书总被挤掉 → 固定在最不可能被打断的时段（比如周三早晨），并允许『只读20min也算完成』。",
+        video:"视频时间不稳 → 和对方约定固定窗口，避免反复协调消耗时间。",
+        gym:"健身没去成 → 前一晚把健身服放床头，降低出门摩擦。",
+        run:"长跑被跳过 → 检查是否拖到太晚接近日落；把出发闹钟提前 15min。",
+        prep:"备餐环节被压缩 → 简化菜式，冷冻蔬菜+即食蛋白是合法选项。",
+      };
+      sug.push(`未完成最多的是<b>「${C.n}」类（${n} 次）</b>。${tips[k]||"建议把这类任务挪到完成率高的时段，并适当降低单次时长。"}`);
+    }
+    const dietOk = Object.values(S.diet).filter(Boolean).length;
+    if(dietOk>0 && dietOk<PLAN.diet.length*0.6) sug.push(`饮食按计划执行只有 <b>${dietOk}/${PLAN.diet.length}</b> 天。先只抓一个习惯：<b>前晚 22:00 设煮饭预约</b>（网站「⏰提醒」页有每天提醒），这一个习惯稳了再谈其他。`);
+    const gymOk = ["week-10-06-1","week-10-13-1"].filter(k=>S.status[k]==="done").length; // 周二健身块(索引随编辑可能变化，尽力而为)
+    const runOk = c.days.filter(d=>d.missed.some(m=>m.includes("长跑"))).length===0 && PLAN.weekend.filter((d,i)=>S.status["weekend-"+d.id+"-"+d.blocks.findIndex(b=>b[3]==="run")]==="done").length>0;
+    if(c.missN>0 && c.missedCat.run) sug.push("长跑有未完成记录 —— 出发时间以日落倒推，勿拖；装备前一晚放门口。");
+  }
+  document.getElementById("analysisBox").innerHTML = sug.map(s=>`<li>${s}</li>`).join("");
+}
+function genFeedback(){
+  const c = collect();
+  const total = c.doneN+c.missN+c.pendN;
+  const pct = total? Math.round(c.doneN/total*100):0;
+  const dietOk = Object.values(S.diet).filter(Boolean).length;
+  const todoOk = S.todos.filter(t=>t.done).length;
+  const shopOk = PLAN.shop.filter((_,i)=>S.shop[i]).length;
+  const edited = Object.keys(S.custom).length;
+  const lines = [];
+  lines.push(`【每周反馈 · ${PLAN.meta.period}】`);
+  lines.push(`① 总完成率：${pct}%（完成 ${c.doneN} / 打叉 ${c.missN} / 未勾 ${c.pendN}）${edited?`；我手动改了 ${edited} 天的计划`:""}`);
+  lines.push(`② 各日：` + c.days.map(d=>`${d.label} ${d.dn}/${d.total}`).join("，"));
+  lines.push(`③ 分类投入（已完成）：` + Object.entries(c.cat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${(CAT[k]||{n:k}).n} ${v.toFixed(1)}h`).join("，"));
+  lines.push(`④ 饮食按计划：${dietOk}/${PLAN.diet.length} 天；采购清单买齐 ${shopOk}/${PLAN.shop.length} 类；每周任务完成 ${todoOk}/${S.todos.length}`);
+  const missed = c.days.flatMap(d=>d.missed.map(m=>`${d.label}：${m}`));
+  if(missed.length) lines.push(`⑤ 未做到的：` + missed.join("；"));
+  lines.push(`⑥ 我对下周的要求/调整：（在这里写下你的新要求，如：视频改时间、加健身房、某作业截止日…）`);
+  document.getElementById("fbText").value = lines.join("\n");
+}
+function copyFeedback(){
+  const ta = document.getElementById("fbText");
+  if(!ta.value){ genFeedback(); }
+  ta.select(); ta.setSelectionRange(0,99999);
+  const done = ()=>{ const t=document.getElementById("copyTip"); t.textContent="✓ 已复制，去 WorkBuddy 粘贴即可"; setTimeout(()=>t.textContent="",3000); };
+  if(navigator.clipboard){ navigator.clipboard.writeText(ta.value).then(done).catch(()=>{document.execCommand("copy");done();}); }
+  else { document.execCommand("copy"); done(); }
+}
+window.genFeedback=genFeedback; window.copyFeedback=copyFeedback;
+
+/* ---------- reminders ---------- */
+function renderRem(){
+  const st = document.getElementById("notifState");
+  if(!("Notification" in window)){ st.textContent="此浏览器不支持通知"; }
+  else st.textContent = Notification.permission==="granted" ? "✓ 通知已开启（保持页面开着即可）" : "未开启";
+  let h = `<table class="tbl"><tr><th style="width:130px">时间</th><th>提醒内容</th><th style="width:70px">启用</th></tr>`;
+  PLAN.reminders.forEach(r=>{
+    const on = S.rem[r.id]!==false;
+    h += `<tr><td><b style="color:#93c5fd">${r.when}</b></td><td>${r.text}</td>
+      <td style="text-align:center"><input type="checkbox" class="ck" ${on?'checked':''} onchange="S.rem['${r.id}']=this.checked;save()"></td></tr>`;
+  });
+  h += `</table><div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.8">提示：网页内通知只在页面打开时生效。手机上请用「📲 导出到手机日历」，系统闹钟级提醒。周日 20:30 的每周反馈另有 WorkBuddy 系统级提醒，不依赖本页面。</div>`;
+  document.getElementById("remBox").innerHTML = h;
+
+  // custom reminders from weekly tasks
+  S.customRem = S.customRem || [];
+  let ch = `<b style="font-size:14px;color:#38bdf8">📌 我添加的提醒（来自每周任务）</b>`;
+  if(!S.customRem.length){
+    ch += `<div style="font-size:12.5px;color:var(--muted);margin-top:8px">还没有。去「✍️ 每周任务」页给任务点 ⏰ 即可添加。</div>`;
+  } else {
+    ch += `<table class="tbl" style="margin-top:10px"><tr><th style="width:110px">日期</th><th style="width:80px">时间</th><th>内容</th><th style="width:70px">启用</th><th style="width:40px"></th></tr>`;
+    S.customRem.forEach((r,i)=>{
+      ch += `<tr><td><b style="color:#93c5fd">${r.date}</b></td><td>${r.time}</td><td>${r.text}</td>
+        <td style="text-align:center"><input type="checkbox" class="ck" ${r.on!==false?'checked':''} onchange="S.customRem[${i}].on=this.checked;save()"></td>
+        <td style="text-align:center"><button class="op" onclick="S.customRem.splice(${i},1);save();renderRem()">🗑</button></td></tr>`;
+    });
+    ch += `</table>`;
+  }
+  document.getElementById("customRemBox").innerHTML = ch;
+}
+function enableNotif(){
+  if(!("Notification" in window)){ toast("此浏览器不支持通知"); return; }
+  Notification.requestPermission().then(p=>{
+    renderRem();
+    toast(p==="granted" ? "通知已开启 ✓ 到点会弹窗提醒" : "通知未开启（浏览器里点了拒绝的话需去设置里改）");
+    if(p==="granted") try{ new Notification("计划中心",{body:"提醒已开启，到点叫你 🏋️🍚🏃📊"}); }catch(e){}
+  });
+}
+function checkReminders(){
+  const now = new Date();
+  const hm = String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  const dow = now.getDay(); // 0=周日
+  const dkey = todayId();
+  PLAN.reminders.forEach(r=>{
+    if(S.rem[r.id]===false) return;
+    if(r.days && !r.days.includes(dow)) return;
+    if(!r.times.includes(hm)) return;
+    const fk = dkey+"-"+r.id+"-"+hm;
+    if(S.fired[fk]) return;
+    S.fired[fk]=true; save();
+    toast("⏰ "+r.text);
+    if("Notification" in window && Notification.permission==="granted"){
+      try{ new Notification("计划提醒",{body:r.text}); }catch(e){}
+    }
+  });
+  // 自定义提醒（来自每周任务）
+  (S.customRem||[]).forEach(r=>{
+    if(r.on===false) return;
+    const d = r.date.replace(/^(\d{1,2})\D+(\d{1,2}).*$/, "2026-$1-$2")
+      .replace(/-(\d)(?!\d)/g, "-0$1");
+    if(d !== "2026-"+dkey) return;
+    if(r.time !== hm) return;
+    const fk = dkey+"-c-"+r.id+"-"+hm;
+    if(S.fired[fk]) return;
+    S.fired[fk]=true; save();
+    toast("⏰ "+r.text);
+    if("Notification" in window && Notification.permission==="granted"){
+      try{ new Notification("计划提醒",{body:r.text}); }catch(e){}
+    }
+  });
+}
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),5000);
+}
+window.enableNotif=enableNotif;
+setInterval(checkReminders, 20000);
+
+/* ---------- .ics calendar export ---------- */
+function pad2(n){ return String(n).padStart(2,"0"); }
+function fmtDT(y,m,d,hh,mm){ return `${y}${pad2(m)}${pad2(d)}T${pad2(hh)}${pad2(mm)}00`; }
+function parseTodoDate(s){
+  const m = String(s||"").match(/(\d{1,2})\D+(\d{1,2})/);
+  if(!m) return null;
+  return {m:+m[1], d:+m[2]};
+}
+function icsEsc(s){ return String(s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+function downloadICS(){
+  const L = [];
+  const ev = (uid, dtStart, dtEnd, summary, desc) => {
+    L.push("BEGIN:VEVENT");
+    L.push("UID:"+uid+"@jkplan");
+    L.push("DTSTAMP:"+fmtDT(2026,10,2,12,0));
+    L.push("DTSTART:"+dtStart);
+    L.push("DTEND:"+dtEnd);
+    L.push("SUMMARY:"+icsEsc(summary));
+    L.push("DESCRIPTION:"+icsEsc(desc||""));
+    L.push("BEGIN:VALARM","TRIGGER:-PT15M","ACTION:DISPLAY","DESCRIPTION:"+icsEsc(summary),"END:VALARM");
+    L.push("END:VEVENT");
+  };
+  const now = new Date(); const y = 2026;
+  // 固定提醒：未来21天内符合星期/时间的都生成事件
+  for(let i=0;i<21;i++){
+    const dt = new Date(now.getTime()+i*86400000);
+    const dow = dt.getDay();
+    PLAN.reminders.forEach(r=>{
+      if(S.rem[r.id]===false) return;
+      if(r.days && !r.days.includes(dow)) return;
+      r.times.forEach(tm=>{
+        const [hh,mm] = tm.split(":").map(Number);
+        ev(`${r.id}-${dt.getFullYear()}-${pad2(dt.getMonth()+1)}-${pad2(dt.getDate())}`,
+           fmtDT(dt.getFullYear(),dt.getMonth()+1,dt.getDate(),hh,mm),
+           fmtDT(dt.getFullYear(),dt.getMonth()+1,dt.getDate(),hh,mm+15),
+           "⏰ "+r.text.replace(/^[^\s]+\s*/,""), "计划中心提醒");
+      });
+    });
+  }
+  // 自定义提醒（每周任务加的）
+  (S.customRem||[]).forEach(r=>{
+    if(r.on===false) return;
+    const p = parseTodoDate(r.date); if(!p) return;
+    const [hh,mm] = (r.time||"09:00").split(":").map(Number);
+    ev(`c-${r.id}`, fmtDT(y,p.m,p.d,hh,mm), fmtDT(y,p.m,p.d,hh,mm+15), r.text, "计划中心 · 每周任务提醒");
+  });
+  // 每周任务本身（当天 8:30 提醒一次）
+  S.todos.forEach((t,i)=>{
+    if(!t.text) return;
+    const p = parseTodoDate(t.date); if(!p) return;
+    ev(`todo-${i}-${p.m}-${p.d}`, fmtDT(y,p.m,p.d,8,30), fmtDT(y,p.m,p.d,9,30), "📌 "+t.text, t.note||"计划中心 · 每周任务");
+  });
+  if(L.length===0){ toast("没有可导出的提醒/任务（先在提醒页和每周任务里添加）"); return; }
+  const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//JK Plan Center//CN","CALSCALE:GREGORIAN",...L,"END:VCALENDAR"].join("\r\n");
+  const blob = new Blob([ics], {type:"text/calendar;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download = "计划提醒_"+new Date().toISOString().slice(0,10)+".ics"; a.click();
+  toast("已下载 .ics —— 手机上打开这个文件 → 添加到日历，就是系统级提醒 ✅");
+}
+window.downloadICS=downloadICS;
+function exportData(){
+  const blob = new Blob([JSON.stringify({plan:PLAN.meta.period, state:S},null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=`计划备份_${new Date().toISOString().slice(0,10)}.json`; a.click();
+}
+function importData(ev){
+  const f=ev.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); S = d.state||d; save(); renderAll(); alert("导入成功"); }catch(e){ alert("文件格式不对"); } };
+  r.readAsText(f);
+}
+function resetData(){ if(confirm("确定清空勾选/编辑/采购/提醒等全部记录？（建议先导出备份）")){ S={status:{},diet:{},todos:[],custom:{},rem:{},shop:{},fired:{},customRem:[]}; save(); renderAll(); } }
+window.exportData=exportData; window.importData=importData; window.resetData=resetData;
+
+/* ---------- footer ---------- */
+document.getElementById("foot").innerHTML =
+  `📱 <b>手机访问</b>：https://shelby051112.github.io/plan-center/ —— 手机浏览器打开，建议「添加到主屏幕」当 App 用；电脑和手机的数据各自保存在各自浏览器里，换设备前用「💾 数据管理 → 导出/导入」同步。<br>`+
+  `提醒三件套：① 手机日历（.ics 导出，系统级）② 网页内通知（页面开着时）③ WorkBuddy 每周日 20:30 系统提醒。每周日晚把「周报告&反馈」页的文本粘贴给 WorkBuddy，即可获得按你新要求生成的下周计划（含重新查询的日落数据）。<br>`+
+  `日落数据来源：timeanddate.com（多伦多，2026年10月）。仓库：github.com/shelby051112/plan-center`;
+
+/* ---------- init ---------- */
+function renderAll(){ renderDays(); renderTodos(); renderDiet(); renderGrocery(); renderRes(); renderStats(); renderRem(); }
+renderAll();
+const tid = todayId();
+if(PLAN.weekend.some(d=>d.id===tid)) showPane("pane-weekend");
+else if(PLAN.week.some(d=>d.id===tid)) showPane("pane-week");
+</script>
+</body>
+</html>
