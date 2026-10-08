@@ -43,6 +43,17 @@
   .btxt{flex:1;min-width:0}
   .bcat{font-size:10px;padding:1px 7px;border-radius:99px;flex:0 0 auto}
   .op{background:none;border:none;cursor:pointer;font-size:15px;padding:4px;color:#4b608a}
+  .opx{background:#0d1830;border:2px solid #2c3a57;border-radius:10px;cursor:pointer;
+       min-width:46px;min-height:46px;font-size:24px;line-height:1;flex:0 0 auto;
+       display:inline-flex;align-items:center;justify-content:center;
+       transition:transform .08s ease, background .15s ease, border-color .15s ease}
+  .opx:active{transform:scale(1.12)}
+  .opx.ok{color:#5b739f}
+  .opx.ok.on{background:#0f766e;border-color:#34d399;color:#fff;box-shadow:0 0 12px rgba(52,211,153,.45)}
+  .opx.no{color:#5b739f}
+  .opx.no.on{background:#7f1d1d;border-color:#f87171;color:#fff;box-shadow:0 0 12px rgba(248,113,113,.45)}
+  .blk .btxt.done-txt{opacity:.55;text-decoration:line-through}
+  .blk .btxt.miss-txt{color:#c98a8a}
   .btn{background:#1c2a4d;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px 14px;font-size:13.5px;cursor:pointer;font-weight:600}
   .btn.pri{background:#2563eb;color:#fff;border-color:#2563eb}
   .btn:hover{filter:brightness(1.15)}
@@ -287,13 +298,17 @@ function renderWeek(){
     const rows = day.blocks.map((b,bi)=>{
       const k="w"+w+"-"+di+"-"+bi;
       const st=S.status[k];
+      const tcls = st==='done'?' done-txt':(st==='miss'?' miss-txt':'');
       return `<div class="blk"><span class="btime">${b.t1}<br>${b.t2}</span>
-        <span class="btxt">${b.txt}</span>
+        <span class="btxt${tcls}">${b.txt}</span>
         ${catTag(b.cat)}
-        <button class="op" title="完成" onclick="mark('${k}','done')" style="color:${st==='done'?'#34d399':'#4b608a'}">✔</button>
-        <button class="op" title="没做到" onclick="mark('${k}','miss')" style="color:${st==='miss'?'#f87171':'#4b608a'}">✘</button></div>`;
+        <button class="opx ok${st==='done'?' on':''}" title="完成" aria-label="完成" onclick="mark('${k}','done')">✔</button>
+        <button class="opx no${st==='miss'?' on':''}" title="没做到" aria-label="没做到" onclick="mark('${k}','miss')">✘</button></div>`;
     }).join("");
-    return `<div class="day ${cls}" id="day-${di}"><div class="dhead"><span class="dname">${day.label}</span><span class="ddate">${tag}</span></div>${rows}</div>`;
+    const dstat = day.blocks.reduce((a,b)=>{ const st=S.status["w"+w+"-"+di+"-"+day.blocks.indexOf(b)]; if(st==='done')a.d++; else if(st==='miss')a.m++; return a; },{d:0,m:0});
+    const dpct = day.blocks.length? Math.round(dstat.d/day.blocks.length*100):0;
+    const dtag = day.blocks.length? `<span style="font-size:12px;color:${dpct===100?'#34d399':(dpct>=60?'#fbbf24':'#8fa3c8')}">✔${dstat.d} ✘${dstat.m} · ${dpct}%</span>`:"";
+    return `<div class="day ${cls}" id="day-${di}"><div class="dhead"><span class="dname">${day.label}</span><span class="ddate">${dtag||tag}</span></div>${rows}</div>`;
   }).join("");
   renderStats(); renderTodos(); renderDiet(); renderGrocery(); renderExams(); renderRes();
   if(!AUTO_SCROLLED && w===todayWeek()){
